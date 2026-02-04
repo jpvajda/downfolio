@@ -1,0 +1,42 @@
+{
+  "name": "downfolio",
+  "version": "0.1.0",
+  "description": "AI-powered CLI tool for generating customized resumes and cover letters from markdown templates",
+  "main": "dist/cli.js",
+  "bin": {
+    "downfolio": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc && node dist/cli.js",
+    "start": "node dist/cli.js",
+    "watch": "tsc --watch"
+  },
+  "keywords": [
+    "resume",
+    "cover-letter",
+    "cli",
+    "ai",
+    "markdown",
+    "job-search"
+  ],
+  "author": "John P Vajda",
+  "license": "MIT",
+  "dependencies": {
+    "@clack/prompts": "^0.9.0",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.7",
+    "execa": "^9.4.0",
+    "figlet": "^1.7.0",
+    "gray-matter": "^4.0.3",
+    "js-yaml": "^4.1.0",
+    "marked": "^14.1.0",
+    "openai": "^4.73.1"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

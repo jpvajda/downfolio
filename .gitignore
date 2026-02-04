@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.log
+.env
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Downfolio specific
+.downfolio/
+templates/
+job_descriptions/
+output/
