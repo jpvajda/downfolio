@@ -46,3 +46,6 @@ output/
 # Exclude user config files (but allow pnpm-lock.yaml)
 config.yaml
 !pnpm-lock.yaml
+
+# Test coverage
+coverage/
