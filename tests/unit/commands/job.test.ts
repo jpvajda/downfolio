@@ -38,7 +38,6 @@ import { jobCommand } from '../../../src/commands/job';
 import * as p from '@clack/prompts';
 import * as paths from '../../../src/utils/paths';
 import * as files from '../../../src/lib/files';
-import { fixtures } from '../../helpers/mocks';
 
 describe('commands/job.ts', () => {
   beforeEach(() => {
