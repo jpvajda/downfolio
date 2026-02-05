@@ -24,8 +24,12 @@ tests/
     │   ├── banner.test.ts     (6 tests)
     │   └── paths.test.ts      (17 tests)
     └── commands/          # Command tests
+        ├── config.test.ts     (16 tests)
+        ├── generate.test.ts   (22 tests)
         ├── init.test.ts       (10 tests)
+        ├── job.test.ts        (19 tests)
         ├── preview.test.ts    (12 tests)
+        ├── template.test.ts   (20 tests)
         └── validate.test.ts   (10 tests)
 ```
 
@@ -136,7 +140,6 @@ Tests are designed to run in CI/CD environments:
 
 ## Future Improvements
 
-- [ ] Add tests for remaining commands (config, generate, job, template)
 - [ ] Add integration tests for end-to-end workflows
 - [ ] Add snapshot tests for generated documents
 - [ ] Add performance benchmarks
