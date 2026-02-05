@@ -12,8 +12,6 @@
     "start": "node dist/cli.js",
     "watch": "tsc --watch",
     "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
     "test:watch": "vitest --watch"
   },
   "keywords": [
@@ -40,8 +38,6 @@
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.10.2",
-    "@vitest/coverage-v8": "^1.0.0",
-    "@vitest/ui": "^1.0.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^1.0.0"

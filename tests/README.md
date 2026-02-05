@@ -5,7 +5,6 @@ Comprehensive unit tests for the Downfolio CLI application.
 ## Test Framework
 
 - **Framework**: Vitest 1.6.1 (TypeScript-native, Jest-compatible)
-- **Coverage**: @vitest/coverage-v8
 - **Mocking**: Vitest built-in mocking
 
 ## Test Structure
@@ -17,43 +16,18 @@ tests/
 │   └── test-utils.ts      # Test utilities and helpers
 └── unit/
     ├── lib/               # Core library tests
-    │   ├── ai.test.ts         (20 tests, 96% coverage)
-    │   ├── config.test.ts     (28 tests, 96% coverage)
-    │   ├── files.test.ts      (36 tests, 100% coverage)
-    │   └── pandoc.test.ts     (19 tests, 98% coverage)
+    │   ├── ai.test.ts         (20 tests)
+    │   ├── config.test.ts     (28 tests)
+    │   ├── files.test.ts      (36 tests)
+    │   └── pandoc.test.ts     (19 tests)
     ├── utils/             # Utility function tests
-    │   ├── banner.test.ts     (6 tests, 100% coverage)
-    │   └── paths.test.ts      (17 tests, 100% coverage)
+    │   ├── banner.test.ts     (6 tests)
+    │   └── paths.test.ts      (17 tests)
     └── commands/          # Command tests
-        ├── init.test.ts       (10 tests, 100% coverage)
-        ├── preview.test.ts    (12 tests, 100% coverage)
-        └── validate.test.ts   (10 tests, 100% coverage)
+        ├── init.test.ts       (10 tests)
+        ├── preview.test.ts    (12 tests)
+        └── validate.test.ts   (10 tests)
 ```
-
-## Coverage Summary
-
-### Overall Statistics
-- **Total Tests**: 158 tests passing
-- **Test Execution Time**: <1 second
-- **Core Modules Coverage**: 97.72% (lib/) | 100% (utils/)
-
-### Module Breakdown
-
-#### Library Modules (src/lib/) - 97.72% Coverage
-- `ai.ts`: 96.32% - AI provider integration (OpenAI, Anthropic)
-- `config.ts`: 96.35% - Configuration management and API key handling
-- `files.ts`: 100% - Template and job file operations
-- `pandoc.ts`: 98.51% - Document format conversion
-
-#### Utility Modules (src/utils/) - 100% Coverage
-- `banner.ts`: 100% - CLI banner display
-- `paths.ts`: 100% - Path management and directory operations
-
-#### Command Modules (src/commands/) - Partial Coverage
-- `init.ts`: 100% - Initialization command
-- `preview.ts`: 100% - Document preview command
-- `validate.ts`: 100% - Markdown validation command
-- Other commands: Not yet tested (config, generate, job, template)
 
 ## Running Tests
 
@@ -63,21 +37,7 @@ pnpm test
 
 # Run tests in watch mode
 pnpm test:watch
-
-# Run tests with coverage report
-pnpm test:coverage
-
-# Run tests with UI
-pnpm test:ui
 ```
-
-## Test Coverage Goals
-
-✅ **Core library modules**: >95% coverage achieved  
-✅ **Utility modules**: 100% coverage achieved  
-✅ **Fast execution**: <30s total (currently <1s)  
-✅ **All tests passing**: 158/158 tests pass  
-⚠️ **Overall coverage**: 46% (prioritized core functionality over commands)
 
 ## Key Testing Patterns
 
@@ -110,9 +70,9 @@ All external dependencies are mocked:
 it('should add template successfully', () => {
   vi.mocked(fs.existsSync).mockReturnValue(true);
   vi.mocked(fs.readFileSync).mockReturnValue('[]');
-  
+
   addTemplate(mockTemplate, filePath);
-  
+
   expect(fs.writeFileSync).toHaveBeenCalled();
 });
 ```
@@ -122,9 +82,9 @@ it('should add template successfully', () => {
 it('should use OpenAI provider when API key available', async () => {
   vi.mocked(config.getApiKey).mockReturnValue('sk-test-key');
   vi.mocked(OpenAI).mockImplementation(() => mockOpenAIClient);
-  
+
   const result = await customizeDocument(options);
-  
+
   expect(result.provider).toBe('openai');
   expect(result.content).toBeDefined();
 });
@@ -134,7 +94,7 @@ it('should use OpenAI provider when API key available', async () => {
 ```typescript
 it('should initialize with API key from options', async () => {
   await initCommand({ apiKey: 'sk-test-key' });
-  
+
   expect(paths.ensureDirectoryExists).toHaveBeenCalledTimes(4);
   expect(config.saveConfig).toHaveBeenCalled();
 });
@@ -179,27 +139,20 @@ Tests are designed to run in CI/CD environments:
 - [ ] Add tests for remaining commands (config, generate, job, template)
 - [ ] Add integration tests for end-to-end workflows
 - [ ] Add snapshot tests for generated documents
-- [ ] Increase overall coverage to >80%
 - [ ] Add performance benchmarks
 
 ## Contributing
 
 When adding new features:
 1. Write tests first (TDD)
-2. Aim for >80% coverage
-3. Follow existing test patterns
-4. Update this README if needed
+2. Follow existing test patterns
+3. Update this README if needed
 
 ## Troubleshooting
 
 ### Tests fail with "module not found"
 ```bash
 pnpm install
-```
-
-### Coverage reports not generating
-```bash
-pnpm install @vitest/coverage-v8
 ```
 
 ### Tests timing out
