@@ -125,10 +125,7 @@ describe('lib/ai.ts', () => {
         }),
       } as any);
 
-      const result = await customizeDocument({
-        ...baseOptions,
-        provider: 'openai',
-      });
+      const result = await customizeDocument(baseOptions);
 
       expect(result.provider).toBe('anthropic');
     });

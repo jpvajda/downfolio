@@ -45,13 +45,13 @@ pnpm test:watch
 
 ## Key Testing Patterns
 
-### 1. Mock Factories (tests/helpers/mocks.ts)
-Reusable mock factories for common dependencies:
-- File system operations (`createMockFs`)
-- Path utilities (`createMockPath`)
-- OpenAI client (`createMockOpenAI`)
-- Anthropic API (`createMockAnthropicResponse`)
-- Clack prompts (`createMockPrompts`)
+### 1. Mocking Strategy
+Tests use Vitest's `vi.mock()` for module-level mocking:
+- File system operations (`fs`)
+- Path utilities (`path`, `os`)
+- API clients (`openai`, `fetch`)
+- CLI prompts (`@clack/prompts`)
+- External processes (`execa` for Pandoc)
 
 ### 2. Test Fixtures
 Pre-defined test data for consistent testing:
@@ -60,12 +60,21 @@ Pre-defined test data for consistent testing:
 - Markdown content samples
 - YAML and JSON test data
 
+**Note**: Test fixtures are defined inline in each test file. The `fixtures` object in `tests/helpers/mocks.ts` is available but not currently used.
+
 ### 3. Isolation
 All external dependencies are mocked:
 - File system (fs)
 - API calls (OpenAI, Anthropic)
 - CLI prompts (@clack/prompts)
 - External processes (Pandoc via execa)
+
+### 4. Helper Utilities (Available but Not Currently Used)
+The `tests/helpers/` directory contains utility functions that could be used to reduce duplication:
+- `mocks.ts`: Mock factories (`createMockFs`, `createMockOpenAI`, `createMockPrompts`, etc.)
+- `test-utils.ts`: Test utilities (`setupTest`, `setupMockFs`, `captureConsole`, etc.)
+
+These helpers are available for future refactoring or new tests, but current tests use direct `vi.mock()` calls for simplicity and clarity.
 
 ## Test Examples
 
@@ -106,19 +115,34 @@ it('should initialize with API key from options', async () => {
 
 ## Mock Utilities
 
-### File System State
+**Note**: The following utilities are available in `tests/helpers/` but are not currently used in tests. They can be imported and used for future refactoring:
+
+### File System State (from `test-utils.ts`)
 ```typescript
+import { createMockFileSystem, setupMockFs } from '../helpers/test-utils';
+
 const state = createMockFileSystem();
 state.files.set('/path/to/file.md', 'content');
 state.directories.add('/path/to/dir');
+setupMockFs(state);
 ```
 
-### Console Capture
+### Console Capture (from `test-utils.ts`)
 ```typescript
+import { captureConsole } from '../helpers/test-utils';
+
 const { output, restore } = captureConsole();
 // ... run code that logs
 expect(output.log).toContain('expected message');
 restore();
+```
+
+### Mock Factories (from `mocks.ts`)
+```typescript
+import { createMockOpenAI, fixtures } from '../helpers/mocks';
+
+const { mockInstance, mockCreate } = createMockOpenAI();
+mockCreate.mockResolvedValue({ choices: [...] });
 ```
 
 ## CI/CD Integration
