@@ -34,9 +34,10 @@ export async function convertToDocx(
       '-o',
       outputPath,
       '--from',
-      'markdown',
+      'markdown+smart',
       '--to',
       'docx',
+      '--standalone',
     ]);
   } catch (error) {
     if (error instanceof Error) {
@@ -57,6 +58,18 @@ export async function convertToPdf(
     throw new Error(`Markdown file not found: ${markdownPath}`);
   }
 
+  // Ensure TeX bin directory is in PATH for PDF engines (BasicTeX/MacTeX)
+  const texBinPath = '/Library/TeX/texbin';
+  const currentPath = process.env.PATH || '';
+  let env = { ...process.env };
+
+  // Only add texbin to PATH if the directory actually exists
+  if (fs.existsSync(texBinPath) && !currentPath.includes(texBinPath)) {
+    env.PATH = `${texBinPath}:${currentPath}`;
+  } else {
+    env.PATH = currentPath;
+  }
+
   try {
     // PDF conversion requires a PDF engine (pdflatex, xelatex, or wkhtmltopdf)
     // Try pdflatex first, fall back to xelatex
@@ -65,11 +78,12 @@ export async function convertToPdf(
       '-o',
       outputPath,
       '--from',
-      'markdown',
+      'markdown+smart',
       '--to',
       'pdf',
       '--pdf-engine=pdflatex',
-    ]);
+      '--standalone',
+    ], { env });
   } catch (error) {
     // Try xelatex as fallback
     try {
@@ -78,16 +92,30 @@ export async function convertToPdf(
         '-o',
         outputPath,
         '--from',
-        'markdown',
+        'markdown+smart',
         '--to',
         'pdf',
         '--pdf-engine=xelatex',
-      ]);
+        '--standalone',
+      ], { env });
     } catch (fallbackError) {
-      throw new Error(
-        'PDF conversion failed. Please install a PDF engine (pdflatex or xelatex). ' +
-        'Alternatively, install wkhtmltopdf and use: pandoc --pdf-engine=wkhtmltopdf'
-      );
+
+      // Provide helpful error message based on whether texbin directory exists
+      const texBinExists = fs.existsSync(texBinPath);
+      let errorMessage = 'PDF conversion failed. ';
+
+      if (!texBinExists) {
+        errorMessage += 'Please install a PDF engine (pdflatex or xelatex). ';
+        errorMessage += 'Install BasicTeX: brew install --cask basictex';
+      } else {
+        errorMessage += 'BasicTeX/MacTeX appears to be installed but not fully set up. ';
+        errorMessage += 'Please ensure BasicTeX is fully installed and restart your terminal. ';
+        errorMessage += 'If using Homebrew, you may need to run the installer package manually.';
+      }
+
+      errorMessage += ' Alternatively, install wkhtmltopdf: brew install wkhtmltopdf';
+
+      throw new Error(errorMessage);
     }
   }
 }

@@ -37,6 +37,8 @@ describe('lib/config.ts', () => {
     delete process.env.ANTHROPIC_API_KEY;
     vi.mocked(paths.getConfigFilePath).mockReturnValue(mockConfigPath);
     vi.mocked(os.platform).mockReturnValue('linux');
+    // Reset fs.writeFileSync to default (no throw) unless explicitly mocked in test
+    vi.mocked(fs.writeFileSync).mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -196,7 +198,7 @@ describe('lib/config.ts', () => {
       });
 
       const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      
+
       // Should not throw, just warn
       expect(() => saveConfig(mockConfig)).not.toThrow();
       expect(consoleWarnSpy).toHaveBeenCalledWith(

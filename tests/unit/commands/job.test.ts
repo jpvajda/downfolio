@@ -192,12 +192,16 @@ describe('commands/job.ts', () => {
           { name: 'senior_engineer', filePath: '/path/to/job.md' },
         ];
         vi.mocked(files.listJobs).mockReturnValue(mockJobs as any);
-        vi.mocked(p.confirm).mockResolvedValue(true as any);
+        vi.mocked(p.confirm).mockResolvedValueOnce(true as any); // First confirmation
+        vi.mocked(files.removeJob).mockReturnValue('/path/to/job.md');
+        vi.mocked(fs.existsSync).mockReturnValue(true);
+        vi.mocked(p.confirm).mockResolvedValueOnce(false as any); // File deletion prompt - decline
 
         await jobCommand('remove', { name: 'senior_engineer' });
 
         expect(files.removeJob).toHaveBeenCalledWith('senior_engineer');
-        expect(p.log.success).toHaveBeenCalledWith('Job "senior_engineer" removed successfully');
+        expect(p.log.success).toHaveBeenCalledWith('Job "senior_engineer" removed from registry');
+        expect(p.log.info).toHaveBeenCalledWith(expect.stringContaining('kept in directory'));
       });
 
       it('should prompt for job selection if name not provided', async () => {
@@ -206,7 +210,10 @@ describe('commands/job.ts', () => {
         ];
         vi.mocked(files.listJobs).mockReturnValue(mockJobs as any);
         vi.mocked(p.select).mockResolvedValue(mockJobs[0] as any);
-        vi.mocked(p.confirm).mockResolvedValue(true as any);
+        vi.mocked(p.confirm).mockResolvedValueOnce(true as any); // Removal confirmation
+        vi.mocked(files.removeJob).mockReturnValue('/path/to/job.md');
+        vi.mocked(fs.existsSync).mockReturnValue(true);
+        vi.mocked(p.confirm).mockResolvedValueOnce(false as any); // File deletion prompt - decline
 
         await jobCommand('remove');
 
@@ -240,6 +247,38 @@ describe('commands/job.ts', () => {
         expect(mockExit).toHaveBeenCalledWith(1);
 
         mockExit.mockRestore();
+      });
+
+      it('should delete file when user confirms', async () => {
+        const mockJobs = [
+          { name: 'senior_engineer', filePath: '/path/to/job.md' },
+        ];
+        vi.mocked(files.listJobs).mockReturnValue(mockJobs as any);
+        vi.mocked(p.confirm).mockResolvedValueOnce(true as any); // Removal confirmation
+        vi.mocked(files.removeJob).mockReturnValue('/path/to/job.md');
+        vi.mocked(fs.existsSync).mockReturnValue(true);
+        vi.mocked(p.confirm).mockResolvedValueOnce(true as any); // File deletion confirmation
+
+        await jobCommand('remove', { name: 'senior_engineer' });
+
+        expect(fs.unlinkSync).toHaveBeenCalledWith('/path/to/job.md');
+        expect(p.log.success).toHaveBeenCalledWith(expect.stringContaining('deleted'));
+      });
+
+      it('should not prompt for file deletion if file does not exist', async () => {
+        const mockJobs = [
+          { name: 'senior_engineer', filePath: '/path/to/job.md' },
+        ];
+        vi.mocked(files.listJobs).mockReturnValue(mockJobs as any);
+        vi.mocked(p.confirm).mockResolvedValueOnce(true as any); // Removal confirmation
+        vi.mocked(files.removeJob).mockReturnValue('/path/to/job.md');
+        vi.mocked(fs.existsSync).mockReturnValue(false); // File doesn't exist
+
+        await jobCommand('remove', { name: 'senior_engineer' });
+
+        // Should only have one confirm call (removal confirmation)
+        expect(p.confirm).toHaveBeenCalledTimes(1);
+        expect(fs.unlinkSync).not.toHaveBeenCalled();
       });
 
       it('should require confirmation before removing', async () => {

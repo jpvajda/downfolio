@@ -7,9 +7,53 @@ vi.mock('../../../src/lib/config', () => ({
   getDefaultModel: vi.fn(),
 }));
 
+// Mock OpenAI - Vitest 4.x requires proper class constructor mocking
 vi.mock('openai', () => {
+  // Create a mockable constructor function
+  const MockOpenAI = vi.fn().mockImplementation(function(this: any) {
+    // When called with 'new', 'this' will be the new instance
+    this.chat = {
+      completions: {
+        create: vi.fn(),
+      },
+    };
+    return this;
+  });
+
+  // Mock error classes - match OpenAI SDK v6 error structure
+  // These need to match the exact constructor signature from the SDK
+  class MockAPIError extends Error {
+    status?: number;
+    error?: any;
+    headers?: Headers;
+    constructor(status: number | undefined, error: any, message: string | undefined, headers: Headers | undefined) {
+      super(message || (error?.message || `API Error ${status}`));
+      this.status = status;
+      this.error = error;
+      this.headers = headers;
+      this.name = 'APIError';
+    }
+  }
+
+  class MockAuthenticationError extends MockAPIError {
+    constructor(status: number | undefined = 401, error: any = undefined, message: string | undefined = undefined, headers: Headers | undefined = undefined) {
+      super(status, error ?? { message: message || 'Unauthorized' }, message || 'Unauthorized', headers ?? new Headers());
+      this.name = 'AuthenticationError';
+    }
+  }
+
+  class MockRateLimitError extends MockAPIError {
+    constructor(status: number | undefined = 429, error: any = undefined, message: string | undefined = undefined, headers: Headers | undefined = undefined) {
+      super(status, error ?? { message: message || 'Rate limit exceeded' }, message || 'Rate limit exceeded', headers ?? new Headers());
+      this.name = 'RateLimitError';
+    }
+  }
+
   return {
-    default: vi.fn(),
+    default: MockOpenAI,
+    APIError: MockAPIError,
+    AuthenticationError: MockAuthenticationError,
+    RateLimitError: MockRateLimitError,
   };
 });
 
@@ -18,7 +62,7 @@ global.fetch = vi.fn();
 
 import { customizeDocument } from '../../../src/lib/ai';
 import * as config from '../../../src/lib/config';
-import OpenAI from 'openai';
+import OpenAI, { AuthenticationError, RateLimitError, APIError } from 'openai';
 
 describe('lib/ai.ts', () => {
   beforeEach(() => {
@@ -46,11 +90,14 @@ describe('lib/ai.ts', () => {
         choices: [{ message: { content: '# Customized Resume' } }],
       });
 
-      vi.mocked(OpenAI).mockImplementation(() => ({
-        chat: {
-          completions: { create: mockCreate },
-        },
-      }) as any);
+      // Mock the OpenAI constructor to return an instance with our mockCreate
+      vi.mocked(OpenAI).mockImplementation(function() {
+        return {
+          chat: {
+            completions: { create: mockCreate },
+          },
+        };
+      });
 
       const result = await customizeDocument({
         ...baseOptions,
@@ -100,11 +147,14 @@ describe('lib/ai.ts', () => {
         choices: [{ message: { content: '# Customized Resume' } }],
       });
 
-      vi.mocked(OpenAI).mockImplementation(() => ({
-        chat: {
-          completions: { create: mockCreate },
-        },
-      }) as any);
+      // Mock the OpenAI constructor to return an instance with our mockCreate
+      vi.mocked(OpenAI).mockImplementation(function() {
+        return {
+          chat: {
+            completions: { create: mockCreate },
+          },
+        };
+      });
 
       const result = await customizeDocument(baseOptions);
 
@@ -146,11 +196,14 @@ describe('lib/ai.ts', () => {
         choices: [{ message: { content: '# Customized Resume' } }],
       });
 
-      vi.mocked(OpenAI).mockImplementation(() => ({
-        chat: {
-          completions: { create: mockCreate },
-        },
-      }) as any);
+      // Mock the OpenAI constructor to return an instance with our mockCreate
+      vi.mocked(OpenAI).mockImplementation(function() {
+        return {
+          chat: {
+            completions: { create: mockCreate },
+          },
+        };
+      });
 
       const result = await customizeDocument(baseOptions);
 
@@ -165,11 +218,14 @@ describe('lib/ai.ts', () => {
         choices: [{ message: { content: '# Customized Resume' } }],
       });
 
-      vi.mocked(OpenAI).mockImplementation(() => ({
-        chat: {
-          completions: { create: mockCreate },
-        },
-      }) as any);
+      // Mock the OpenAI constructor to return an instance with our mockCreate
+      vi.mocked(OpenAI).mockImplementation(function() {
+        return {
+          chat: {
+            completions: { create: mockCreate },
+          },
+        };
+      });
 
       const result = await customizeDocument({
         ...baseOptions,
@@ -195,11 +251,14 @@ describe('lib/ai.ts', () => {
         choices: [{ message: { content: '# Customized Resume' } }],
       });
 
-      vi.mocked(OpenAI).mockImplementation(() => ({
-        chat: {
-          completions: { create: mockCreate },
-        },
-      }) as any);
+      // Mock the OpenAI constructor to return an instance with our mockCreate
+      vi.mocked(OpenAI).mockImplementation(function() {
+        return {
+          chat: {
+            completions: { create: mockCreate },
+          },
+        };
+      });
 
       const result = await customizeDocument({
         ...baseOptions,
@@ -225,14 +284,17 @@ describe('lib/ai.ts', () => {
       vi.mocked(config.getDefaultModel).mockReturnValue('gpt-4o-mini');
 
       const mockCreate = vi.fn().mockRejectedValue(
-        new Error('401 Unauthorized')
+        new AuthenticationError(401, { message: '401 Unauthorized' }, '401 Unauthorized', new Headers())
       );
 
-      vi.mocked(OpenAI).mockImplementation(() => ({
-        chat: {
-          completions: { create: mockCreate },
-        },
-      }) as any);
+      // Set up the mock so that new OpenAI() returns an object with our mockCreate
+      vi.mocked(OpenAI).mockImplementation(function() {
+        return {
+          chat: {
+            completions: { create: mockCreate },
+          },
+        };
+      });
 
       await expect(
         customizeDocument({ ...baseOptions, provider: 'openai' })
@@ -244,14 +306,17 @@ describe('lib/ai.ts', () => {
       vi.mocked(config.getDefaultModel).mockReturnValue('gpt-4o-mini');
 
       const mockCreate = vi.fn().mockRejectedValue(
-        new Error('429 rate limit exceeded')
+        new RateLimitError(429, { message: '429 rate limit exceeded' }, '429 rate limit exceeded', new Headers())
       );
 
-      vi.mocked(OpenAI).mockImplementation(() => ({
-        chat: {
-          completions: { create: mockCreate },
-        },
-      }) as any);
+      // Set up the mock so that new OpenAI() returns an object with our mockCreate
+      vi.mocked(OpenAI).mockImplementation(function() {
+        return {
+          chat: {
+            completions: { create: mockCreate },
+          },
+        };
+      });
 
       await expect(
         customizeDocument({ ...baseOptions, provider: 'openai' })
@@ -263,14 +328,17 @@ describe('lib/ai.ts', () => {
       vi.mocked(config.getDefaultModel).mockReturnValue('gpt-4o');
 
       const mockCreate = vi.fn().mockRejectedValue(
-        new Error('does not have access to this model')
+        new APIError(403, { message: 'does not have access to this model' }, 'does not have access to this model', new Headers())
       );
 
-      vi.mocked(OpenAI).mockImplementation(() => ({
-        chat: {
-          completions: { create: mockCreate },
-        },
-      }) as any);
+      // Set up the mock so that new OpenAI() returns an object with our mockCreate
+      vi.mocked(OpenAI).mockImplementation(function() {
+        return {
+          chat: {
+            completions: { create: mockCreate },
+          },
+        };
+      });
 
       await expect(
         customizeDocument({ ...baseOptions, provider: 'openai' })
@@ -285,11 +353,14 @@ describe('lib/ai.ts', () => {
         choices: [{ message: { content: '# Customized Content' } }],
       });
 
-      vi.mocked(OpenAI).mockImplementation(() => ({
-        chat: {
-          completions: { create: mockCreate },
-        },
-      }) as any);
+      // Set up the mock so that new OpenAI() returns an object with our mockCreate
+      vi.mocked(OpenAI).mockImplementation(function() {
+        return {
+          chat: {
+            completions: { create: mockCreate },
+          },
+        };
+      });
 
       const result = await customizeDocument({
         ...baseOptions,
@@ -310,11 +381,14 @@ describe('lib/ai.ts', () => {
         choices: [{ message: {} }],
       });
 
-      vi.mocked(OpenAI).mockImplementation(() => ({
-        chat: {
-          completions: { create: mockCreate },
-        },
-      }) as any);
+      // Set up the mock so that new OpenAI() returns an object with our mockCreate
+      vi.mocked(OpenAI).mockImplementation(function() {
+        return {
+          chat: {
+            completions: { create: mockCreate },
+          },
+        };
+      });
 
       await expect(
         customizeDocument({ ...baseOptions, provider: 'openai' })
@@ -437,11 +511,14 @@ describe('lib/ai.ts', () => {
         choices: [{ message: { content: '# Resume' } }],
       });
 
-      vi.mocked(OpenAI).mockImplementation(() => ({
-        chat: {
-          completions: { create: mockCreate },
-        },
-      }) as any);
+      // Set up the mock so that new OpenAI() returns an object with our mockCreate
+      vi.mocked(OpenAI).mockImplementation(function() {
+        return {
+          chat: {
+            completions: { create: mockCreate },
+          },
+        };
+      });
 
       await customizeDocument({
         template: '# Resume',
@@ -463,11 +540,14 @@ describe('lib/ai.ts', () => {
         choices: [{ message: { content: '# Cover Letter' } }],
       });
 
-      vi.mocked(OpenAI).mockImplementation(() => ({
-        chat: {
-          completions: { create: mockCreate },
-        },
-      }) as any);
+      // Set up the mock so that new OpenAI() returns an object with our mockCreate
+      vi.mocked(OpenAI).mockImplementation(function() {
+        return {
+          chat: {
+            completions: { create: mockCreate },
+          },
+        };
+      });
 
       await customizeDocument({
         template: '# Cover Letter',
@@ -488,11 +568,14 @@ describe('lib/ai.ts', () => {
         choices: [{ message: { content: '# Resume' } }],
       });
 
-      vi.mocked(OpenAI).mockImplementation(() => ({
-        chat: {
-          completions: { create: mockCreate },
-        },
-      }) as any);
+      // Set up the mock so that new OpenAI() returns an object with our mockCreate
+      vi.mocked(OpenAI).mockImplementation(function() {
+        return {
+          chat: {
+            completions: { create: mockCreate },
+          },
+        };
+      });
 
       const template = '# My Resume Template';
       const jobDescription = '# Senior Engineer Position';

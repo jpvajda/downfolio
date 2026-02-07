@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { APIError, AuthenticationError, RateLimitError } from 'openai';
 import { getApiKey, getDefaultModel } from './config';
 import { OpenAIModel, AnthropicModel } from '../types';
 
@@ -71,10 +72,13 @@ async function customizeWithOpenAI(
       max_tokens: 2000,
     });
 
-    const content = completion.choices[0]?.message?.content;
+    let content = completion.choices[0]?.message?.content;
     if (!content) {
       throw new Error('No content returned from OpenAI API');
     }
+
+    // Strip code block markers if AI wrapped the response in ```
+    content = stripCodeBlockMarkers(content);
 
     return {
       content,
@@ -82,16 +86,27 @@ async function customizeWithOpenAI(
       model,
     };
   } catch (error) {
-    if (error instanceof Error) {
-      // Provide more detailed error information
+    // Use OpenAI SDK v6 specific error types for better error handling
+    if (error instanceof AuthenticationError) {
+      throw new Error(
+        `OpenAI API authentication error: ${error.message}\n\n` +
+        `This usually means your API key is invalid or expired. Please check your OPENAI_API_KEY.`
+      );
+    }
+
+    if (error instanceof RateLimitError) {
+      throw new Error(
+        `OpenAI API rate limit error: ${error.message}\n\n` +
+        `Rate limit exceeded. Please wait a moment and try again.`
+      );
+    }
+
+    if (error instanceof APIError) {
       let errorMessage = `OpenAI API error: ${error.message}`;
 
-      // Check for common error types
-      if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-        errorMessage += '\n\nThis usually means your API key is invalid or expired. Please check your OPENAI_API_KEY.';
-      } else if (error.message.includes('429') || error.message.includes('rate limit')) {
-        errorMessage += '\n\nRate limit exceeded. Please wait a moment and try again.';
-      } else if (error.message.includes('does not have access') || error.message.includes('does not exist or you do not have access')) {
+      // Check for specific error scenarios
+      // Note: 401 and 429 errors are already handled by AuthenticationError and RateLimitError checks above
+      if (error.message.includes('does not have access') || error.message.includes('does not exist or you do not have access')) {
         errorMessage += `\n\n⚠️  API Key Scoping Issue: Your API key doesn't have access to the model "${model}".\n\n` +
           `This usually happens when:\n` +
           `1. Your API key has restricted permissions (not "All" permissions)\n` +
@@ -107,6 +122,12 @@ async function customizeWithOpenAI(
 
       throw new Error(errorMessage);
     }
+
+    // Fallback for non-OpenAI errors
+    if (error instanceof Error) {
+      throw new Error(`OpenAI API error: ${error.message}`);
+    }
+
     throw error;
   }
 }
@@ -152,11 +173,14 @@ async function customizeWithAnthropic(
     }
 
     const data = await response.json() as { content?: Array<{ text?: string }> };
-    const content = data.content?.[0]?.text;
+    let content = data.content?.[0]?.text;
 
     if (!content) {
       throw new Error('No content returned from Anthropic API');
     }
+
+    // Strip code block markers if AI wrapped the response in ```
+    content = stripCodeBlockMarkers(content);
 
     return {
       content,
@@ -169,6 +193,19 @@ async function customizeWithAnthropic(
     }
     throw error;
   }
+}
+
+/**
+ * Strip code block markers (```) from AI response if present
+ * Note: OpenAI models tend to wrap markdown responses in code blocks more often than Anthropic,
+ * but we strip them from both providers as a defensive measure.
+ */
+function stripCodeBlockMarkers(content: string): string {
+  // Remove leading ```markdown or ``` if present
+  content = content.replace(/^```(?:markdown)?\s*\n?/i, '');
+  // Remove trailing ``` if present
+  content = content.replace(/\n?```\s*$/i, '');
+  return content.trim();
 }
 
 /**
@@ -186,7 +223,9 @@ Guidelines:
 - Maintain truthful representation of the candidate's background
 - Use action verbs and quantifiable achievements where possible
 - Keep the same structure and sections as the template
-- Return ONLY the customized markdown content, no explanations or meta-commentary`;
+- Return ONLY the customized markdown content, no explanations or meta-commentary
+- Do NOT wrap the response in code blocks (no triple backticks)
+- Return raw markdown text only`;
   } else {
     return `You are an expert cover letter writer specializing in personalized, compelling cover letters that connect candidate experiences to specific job opportunities.
 
@@ -197,7 +236,9 @@ Guidelines:
 - Use a professional but personable tone
 - Highlight 2-3 key experiences or skills that directly relate to the job
 - Keep the same structure and style as the template
-- Return ONLY the customized markdown content, no explanations or meta-commentary`;
+- Return ONLY the customized markdown content, no explanations or meta-commentary
+- Do NOT wrap the response in code blocks (no triple backticks)
+- Return raw markdown text only`;
   }
 }
 

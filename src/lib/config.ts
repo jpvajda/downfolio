@@ -90,7 +90,14 @@ export function saveConfig(config: Config): void {
     fs.writeFileSync(configPath, yamlContent, 'utf-8');
 
     // Set restrictive permissions after writing (chmod 600)
-    setSecureFilePermissions(configPath);
+    // If this fails, warn but don't throw (file was saved successfully)
+    try {
+      setSecureFilePermissions(configPath);
+    } catch (permError) {
+      console.warn(
+        `Could not set secure permissions on config file: ${permError instanceof Error ? permError.message : String(permError)}`
+      );
+    }
   } catch (error) {
     throw new Error(`Failed to save config: ${error}`);
   }

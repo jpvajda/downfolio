@@ -1,8 +1,56 @@
 # Downfolio
 
-AI-powered CLI tool for generating customized resumes and cover letters from markdown templates.
+Markdown + Porfolio = Downfolio
+
+AI-powered CLI tool for generating customized resumes and cover letters from markdown templates based on your career experience.
+
+
+![image](./images/downfolio.png)
+
+## Recommended Use
+
+1. Create base templates for cover letter and resumes based on your REAL career experience. (Don't Use AI for this step!)
+2. For every job you want to apply for use Downfolio to generate custom resumes and cover letters from your base templates using a job description.
+3. Review the output carefully and ensure it reflects your work experience.
+4. Edit as needed.
+5. Apply to the job.
 
 ## Installation
+
+### Prerequisites
+
+Downfolio requires the following dependencies for document conversion:
+
+**Required for DOCX and PDF conversion:**
+- **Pandoc** - Document converter
+  ```bash
+  # macOS
+  brew install pandoc
+
+  # Other platforms: https://pandoc.org/installing.html
+  ```
+
+**Required for PDF conversion only:**
+- **PDF Engine** - One of the following:
+  - **BasicTeX** (recommended, ~100MB)
+    ```bash
+    # macOS
+    brew install --cask basictex
+    # Then restart your terminal or run:
+    eval "$(/usr/libexec/path_helper)"
+    ```
+  - **MacTeX** (full distribution, ~4GB)
+    ```bash
+    brew install --cask mactex-no-gui
+    ```
+  - **wkhtmltopdf** (alternative)
+    ```bash
+    brew install wkhtmltopdf
+    ```
+
+**Note:** Markdown format requires no dependencies. DOCX requires only Pandoc. PDF requires both Pandoc and a PDF engine.
+
+### Install Downfolio
 
 ```bash
 pnpm install
@@ -126,16 +174,6 @@ pnpm run watch
 
 ## Testing
 
-TBD
+See [tests](./tests/)
 
-## CLI Commands
 
-- `downfolio init` - Initialize project
-- `downfolio config` - Manage configuration
-- `downfolio template` - Manage templates
-- `downfolio job` - Manage job descriptions
-- `downfolio generate` - Generate documents
-- `downfolio validate` - Validate markdown files
-- `downfolio preview` - Preview markdown files
-
-All commands support interactive mode with Clack prompts when flags are omitted.
