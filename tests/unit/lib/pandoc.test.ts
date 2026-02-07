@@ -214,7 +214,13 @@ describe('lib/pandoc.ts', () => {
     });
 
     it('should throw helpful error if both PDF engines fail', async () => {
-      vi.mocked(fs.existsSync).mockReturnValue(true);
+      // Mock existsSync to return true for markdown file, false for TeX bin path
+      vi.mocked(fs.existsSync).mockImplementation((path: any) => {
+        if (path === markdownPath) return true;
+        if (path === '/Library/TeX/texbin') return false;
+        return false;
+      });
+
       vi.mocked(execa)
         .mockRejectedValueOnce(new Error('pdflatex not found'))
         .mockRejectedValueOnce(new Error('xelatex not found'));
