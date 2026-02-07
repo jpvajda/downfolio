@@ -101,8 +101,26 @@ export async function convertCommand(options: ConvertOptions): Promise<void> {
     // Get output formats
     let formats: PandocFormat[];
     if (options.format && options.format.length > 0) {
-      // Validate formats
-      const validFormats = options.format.filter((f) => f === 'docx' || f === 'pdf') as PandocFormat[];
+      // Validate formats and warn about invalid ones
+      const validFormats: PandocFormat[] = [];
+      const invalidFormats: string[] = [];
+
+      for (const format of options.format) {
+        if (format === 'docx' || format === 'pdf') {
+          validFormats.push(format as PandocFormat);
+        } else {
+          invalidFormats.push(format);
+        }
+      }
+
+      // Warn about invalid formats that were filtered out
+      if (invalidFormats.length > 0) {
+        p.log.warn(
+          `Invalid format(s) ignored: ${invalidFormats.join(', ')}. Valid formats are "docx" and "pdf".`
+        );
+      }
+
+      // Error if no valid formats remain
       if (validFormats.length === 0) {
         p.cancel('Invalid format. Must be "docx" and/or "pdf"');
         process.exit(1);

@@ -21,6 +21,9 @@ vi.mock('@clack/prompts', () => ({
   })),
   isCancel: vi.fn(() => false),
   cancel: vi.fn(),
+  log: {
+    warn: vi.fn(),
+  },
 }));
 vi.mock('../../../src/utils/paths', () => ({
   isInitialized: vi.fn(() => true),
@@ -415,7 +418,7 @@ describe('commands/convert.ts', () => {
       mockExit.mockRestore();
     });
 
-    it('should filter invalid formats', async () => {
+    it('should filter invalid formats and warn about them', async () => {
       vi.mocked(fs.existsSync).mockImplementation((p) => {
         const pathStr = String(p);
         return pathStr === '/path/to/resume.md';
@@ -428,6 +431,10 @@ describe('commands/convert.ts', () => {
         format: ['docx', 'invalid', 'pdf'],
       });
 
+      // Should warn about invalid format
+      expect(p.log.warn).toHaveBeenCalledWith(
+        expect.stringContaining('Invalid format(s) ignored: invalid')
+      );
       // Should only call docx and pdf, not invalid format
       expect(convertToDocx).toHaveBeenCalled();
       expect(convertToPdf).toHaveBeenCalled();
@@ -443,12 +450,38 @@ describe('commands/convert.ts', () => {
         format: ['invalid1', 'invalid2'],
       });
 
+      // Should warn about all invalid formats
+      expect(p.log.warn).toHaveBeenCalledWith(
+        expect.stringContaining('Invalid format(s) ignored: invalid1, invalid2')
+      );
+      // Should cancel with error message
       expect(p.cancel).toHaveBeenCalledWith(
         expect.stringContaining('Invalid format')
       );
       expect(mockExit).toHaveBeenCalledWith(1);
 
       mockExit.mockRestore();
+    });
+
+    it('should warn about invalid format when mixing valid and invalid formats', async () => {
+      vi.mocked(fs.existsSync).mockImplementation((p) => {
+        const pathStr = String(p);
+        return pathStr === '/path/to/resume.md';
+      });
+      vi.mocked(convertToPdf).mockResolvedValue();
+
+      await convertCommand({
+        file: '/path/to/resume.md',
+        format: ['doc', 'pdf'], // 'doc' is invalid (should be 'docx')
+      });
+
+      // Should warn about 'doc' being invalid
+      expect(p.log.warn).toHaveBeenCalledWith(
+        expect.stringContaining('Invalid format(s) ignored: doc')
+      );
+      // Should still convert to pdf
+      expect(convertToPdf).toHaveBeenCalled();
+      expect(convertToDocx).not.toHaveBeenCalled();
     });
 
     it('should recursively find markdown files in subdirectories', async () => {

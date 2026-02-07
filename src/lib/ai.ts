@@ -105,11 +105,8 @@ async function customizeWithOpenAI(
       let errorMessage = `OpenAI API error: ${error.message}`;
 
       // Check for specific error scenarios
-      if (error.status === 401) {
-        errorMessage += '\n\nThis usually means your API key is invalid or expired. Please check your OPENAI_API_KEY.';
-      } else if (error.status === 429) {
-        errorMessage += '\n\nRate limit exceeded. Please wait a moment and try again.';
-      } else if (error.message.includes('does not have access') || error.message.includes('does not exist or you do not have access')) {
+      // Note: 401 and 429 errors are already handled by AuthenticationError and RateLimitError checks above
+      if (error.message.includes('does not have access') || error.message.includes('does not exist or you do not have access')) {
         errorMessage += `\n\n⚠️  API Key Scoping Issue: Your API key doesn't have access to the model "${model}".\n\n` +
           `This usually happens when:\n` +
           `1. Your API key has restricted permissions (not "All" permissions)\n` +
