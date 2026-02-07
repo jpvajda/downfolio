@@ -13,6 +13,7 @@ import { jobCommand } from './commands/job';
 import { generateCommand } from './commands/generate';
 import { validateCommand } from './commands/validate';
 import { previewCommand } from './commands/preview';
+import { convertCommand } from './commands/convert';
 
 const program = new Command();
 
@@ -100,6 +101,23 @@ program
   .argument('[file]', 'File to preview')
   .action(async (file) => {
     await previewCommand(file);
+  });
+
+// Convert command
+program
+  .command('convert')
+  .description('Convert markdown file to docx/pdf formats')
+  .argument('[file]', 'Markdown file to convert')
+  .option('--format <formats...>', 'Output formats: docx, pdf')
+  .option('--output-dir <dir>', 'Output directory (default: same as input file)')
+  .option('--output-name <name>', 'Output base name (default: input filename without extension)')
+  .action(async (file, options) => {
+    await convertCommand({
+      file,
+      format: options.format,
+      outputDir: options.outputDir,
+      outputName: options.outputName,
+    });
   });
 
 // Handle errors gracefully

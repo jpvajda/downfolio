@@ -64,7 +64,7 @@ describe('lib/files.ts', () => {
     it('should prevent duplicates', () => {
       const filePath = `${mockTemplatesPath}/base_resume.md`;
       const existingTemplates = JSON.stringify([mockTemplate]);
-      
+
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(fs.readFileSync).mockReturnValue(existingTemplates);
 
@@ -86,7 +86,7 @@ describe('lib/files.ts', () => {
     it('should store absolute path', () => {
       const filePath = 'relative/path/template.md';
       const absolutePath = '/home/user/Downfolio/Templates/template.md';
-      
+
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(fs.readFileSync).mockReturnValue('[]');
       vi.mocked(path.resolve).mockReturnValue(absolutePath);
@@ -109,7 +109,7 @@ describe('lib/files.ts', () => {
         type: 'cover-letter',
         filePath: '',
       };
-      
+
       const existingTemplates = JSON.stringify([resumeTemplate]);
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(fs.readFileSync).mockReturnValue(existingTemplates);
@@ -125,7 +125,7 @@ describe('lib/files.ts', () => {
         { name: 'base_resume', type: 'resume', filePath: '/path/1.md' },
         { name: 'base_cover_letter', type: 'cover-letter', filePath: '/path/2.md' },
       ];
-      
+
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockTemplates));
 
@@ -154,21 +154,22 @@ describe('lib/files.ts', () => {
   });
 
   describe('removeTemplate()', () => {
-    it('should remove template successfully', () => {
+    it('should remove template successfully and return file path', () => {
       const mockTemplates: Template[] = [
         { name: 'base_resume', type: 'resume', filePath: '/path/1.md' },
         { name: 'other', type: 'resume', filePath: '/path/2.md' },
       ];
-      
+
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockTemplates));
 
-      removeTemplate('base_resume', 'resume');
+      const filePath = removeTemplate('base_resume', 'resume');
 
       const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
       const savedData = JSON.parse(writeCall[1] as string);
       expect(savedData).toHaveLength(1);
       expect(savedData[0].name).toBe('other');
+      expect(filePath).toBe('/path/1.md');
     });
 
     it('should throw if template not found', () => {
@@ -180,17 +181,19 @@ describe('lib/files.ts', () => {
       );
     });
 
-    it('should not delete the actual file', () => {
+    it('should return file path but not delete the actual file', () => {
       const mockTemplates: Template[] = [
         { name: 'base_resume', type: 'resume', filePath: '/path/1.md' },
       ];
-      
+
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockTemplates));
 
-      removeTemplate('base_resume', 'resume');
+      const filePath = removeTemplate('base_resume', 'resume');
 
-      // Verify that unlinkSync (file deletion) is not called
+      // Verify that it returns the file path
+      expect(filePath).toBe('/path/1.md');
+      // Verify that unlinkSync (file deletion) is not called (deletion happens in command handler)
       expect(fs.unlinkSync).not.toHaveBeenCalled();
     });
 
@@ -199,7 +202,7 @@ describe('lib/files.ts', () => {
         { name: 'base', type: 'resume', filePath: '/path/1.md' },
         { name: 'base', type: 'cover-letter', filePath: '/path/2.md' },
       ];
-      
+
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockTemplates));
 
@@ -282,7 +285,7 @@ describe('lib/files.ts', () => {
     it('should prevent duplicates', () => {
       const filePath = `${mockJobsPath}/senior_engineer.md`;
       const existingJobs = JSON.stringify([mockJob]);
-      
+
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(fs.readFileSync).mockReturnValue(existingJobs);
 
@@ -304,7 +307,7 @@ describe('lib/files.ts', () => {
     it('should store absolute path', () => {
       const filePath = 'relative/path/job.md';
       const absolutePath = '/home/user/Downfolio/Jobs/job.md';
-      
+
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(fs.readFileSync).mockReturnValue('[]');
       vi.mocked(path.resolve).mockReturnValue(absolutePath);
@@ -323,7 +326,7 @@ describe('lib/files.ts', () => {
         { name: 'senior_engineer', filePath: '/path/1.md' },
         { name: 'junior_dev', filePath: '/path/2.md' },
       ];
-      
+
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockJobs));
 
@@ -356,7 +359,7 @@ describe('lib/files.ts', () => {
       const mockJobs: Job[] = [
         { name: 'senior_engineer', filePath: '/path/1.md' },
       ];
-      
+
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockJobs));
 
@@ -376,21 +379,22 @@ describe('lib/files.ts', () => {
   });
 
   describe('removeJob()', () => {
-    it('should remove job successfully', () => {
+    it('should remove job successfully and return file path', () => {
       const mockJobs: Job[] = [
         { name: 'senior_engineer', filePath: '/path/1.md' },
         { name: 'junior_dev', filePath: '/path/2.md' },
       ];
-      
+
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockJobs));
 
-      removeJob('senior_engineer');
+      const filePath = removeJob('senior_engineer');
 
       const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
       const savedData = JSON.parse(writeCall[1] as string);
       expect(savedData).toHaveLength(1);
       expect(savedData[0].name).toBe('junior_dev');
+      expect(filePath).toBe('/path/1.md');
     });
 
     it('should throw if job not found', () => {
@@ -402,16 +406,19 @@ describe('lib/files.ts', () => {
       );
     });
 
-    it('should not delete the actual file', () => {
+    it('should return file path but not delete the actual file', () => {
       const mockJobs: Job[] = [
         { name: 'senior_engineer', filePath: '/path/1.md' },
       ];
-      
+
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockJobs));
 
-      removeJob('senior_engineer');
+      const filePath = removeJob('senior_engineer');
 
+      // Verify that it returns the file path
+      expect(filePath).toBe('/path/1.md');
+      // Verify that unlinkSync (file deletion) is not called (deletion happens in command handler)
       expect(fs.unlinkSync).not.toHaveBeenCalled();
     });
   });
@@ -447,7 +454,7 @@ describe('lib/files.ts', () => {
         { name: 'base_resume', type: 'resume', filePath: '/path/resume.md' },
       ];
       const fileContent = '# Resume Template';
-      
+
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(fs.readFileSync)
         .mockReturnValueOnce(JSON.stringify(mockTemplates))
@@ -472,7 +479,7 @@ describe('lib/files.ts', () => {
       const mockTemplates: Template[] = [
         { name: 'base_resume', type: 'resume', filePath: '/path/resume.md' },
       ];
-      
+
       vi.mocked(fs.existsSync)
         .mockReturnValueOnce(true)  // storage.json exists
         .mockReturnValueOnce(false); // template file doesn't exist
@@ -490,7 +497,7 @@ describe('lib/files.ts', () => {
         { name: 'senior_engineer', filePath: '/path/job.md' },
       ];
       const fileContent = '# Job Description';
-      
+
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(fs.readFileSync)
         .mockReturnValueOnce(JSON.stringify(mockJobs))
@@ -515,7 +522,7 @@ describe('lib/files.ts', () => {
       const mockJobs: Job[] = [
         { name: 'senior_engineer', filePath: '/path/job.md' },
       ];
-      
+
       vi.mocked(fs.existsSync)
         .mockReturnValueOnce(true)  // storage.json exists
         .mockReturnValueOnce(false); // job file doesn't exist

@@ -216,12 +216,16 @@ describe('commands/template.ts', () => {
           { name: 'base_resume', type: 'resume' as const, filePath: '/path/to/resume.md' },
         ];
         vi.mocked(files.listTemplates).mockReturnValue(mockTemplates as any);
-        vi.mocked(p.confirm).mockResolvedValue(true as any);
+        vi.mocked(p.confirm).mockResolvedValueOnce(true as any); // First confirmation
+        vi.mocked(files.removeTemplate).mockReturnValue('/path/to/resume.md');
+        vi.mocked(fs.existsSync).mockReturnValue(true);
+        vi.mocked(p.confirm).mockResolvedValueOnce(false as any); // File deletion prompt - decline
 
         await templateCommand('remove', { name: 'base_resume', type: 'resume' });
 
         expect(files.removeTemplate).toHaveBeenCalledWith('base_resume', 'resume');
-        expect(p.log.success).toHaveBeenCalledWith('Template "base_resume" removed successfully');
+        expect(p.log.success).toHaveBeenCalledWith('Template "base_resume" removed from registry');
+        expect(p.log.info).toHaveBeenCalledWith(expect.stringContaining('kept in directory'));
       });
 
       it('should prompt for template selection if name/type not provided', async () => {
@@ -230,7 +234,10 @@ describe('commands/template.ts', () => {
         ];
         vi.mocked(files.listTemplates).mockReturnValue(mockTemplates as any);
         vi.mocked(p.select).mockResolvedValue(mockTemplates[0] as any);
-        vi.mocked(p.confirm).mockResolvedValue(true as any);
+        vi.mocked(p.confirm).mockResolvedValueOnce(true as any); // Removal confirmation
+        vi.mocked(files.removeTemplate).mockReturnValue('/path/to/resume.md');
+        vi.mocked(fs.existsSync).mockReturnValue(true);
+        vi.mocked(p.confirm).mockResolvedValueOnce(false as any); // File deletion prompt - decline
 
         await templateCommand('remove');
 
@@ -239,6 +246,38 @@ describe('commands/template.ts', () => {
             message: 'Which template to remove?',
           })
         );
+      });
+
+      it('should delete file when user confirms', async () => {
+        const mockTemplates = [
+          { name: 'base_resume', type: 'resume' as const, filePath: '/path/to/resume.md' },
+        ];
+        vi.mocked(files.listTemplates).mockReturnValue(mockTemplates as any);
+        vi.mocked(p.confirm).mockResolvedValueOnce(true as any); // Removal confirmation
+        vi.mocked(files.removeTemplate).mockReturnValue('/path/to/resume.md');
+        vi.mocked(fs.existsSync).mockReturnValue(true);
+        vi.mocked(p.confirm).mockResolvedValueOnce(true as any); // File deletion confirmation
+
+        await templateCommand('remove', { name: 'base_resume', type: 'resume' });
+
+        expect(fs.unlinkSync).toHaveBeenCalledWith('/path/to/resume.md');
+        expect(p.log.success).toHaveBeenCalledWith(expect.stringContaining('deleted'));
+      });
+
+      it('should not prompt for file deletion if file does not exist', async () => {
+        const mockTemplates = [
+          { name: 'base_resume', type: 'resume' as const, filePath: '/path/to/resume.md' },
+        ];
+        vi.mocked(files.listTemplates).mockReturnValue(mockTemplates as any);
+        vi.mocked(p.confirm).mockResolvedValueOnce(true as any); // Removal confirmation
+        vi.mocked(files.removeTemplate).mockReturnValue('/path/to/resume.md');
+        vi.mocked(fs.existsSync).mockReturnValue(false); // File doesn't exist
+
+        await templateCommand('remove', { name: 'base_resume', type: 'resume' });
+
+        // Should only have one confirm call (removal confirmation)
+        expect(p.confirm).toHaveBeenCalledTimes(1);
+        expect(fs.unlinkSync).not.toHaveBeenCalled();
       });
 
       it('should warn if no templates found', async () => {

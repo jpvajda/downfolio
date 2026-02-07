@@ -79,7 +79,7 @@ export function listTemplates(): Template[] {
   return loadStorage<Template>('templates');
 }
 
-export function removeTemplate(name: string, type: 'resume' | 'cover-letter'): void {
+export function removeTemplate(name: string, type: 'resume' | 'cover-letter'): string | null {
   const templates = loadStorage<Template>('templates');
   const template = templates.find(t => t.name === name && t.type === type);
 
@@ -87,9 +87,12 @@ export function removeTemplate(name: string, type: 'resume' | 'cover-letter'): v
     throw new Error(`Template "${name}" of type "${type}" not found`);
   }
 
-  // Only remove from registry - don't delete the file (user manages files)
+  // Remove from registry
   const filtered = templates.filter(t => !(t.name === name && t.type === type));
   saveStorage('templates', filtered);
+
+  // Return file path so caller can optionally delete it
+  return template.filePath || null;
 }
 
 // Job operations - registers files that already exist in Jobs directory
@@ -136,7 +139,7 @@ export function getJob(name: string): Job | undefined {
   return jobs.find(j => j.name === name);
 }
 
-export function removeJob(name: string): void {
+export function removeJob(name: string): string | null {
   const jobs = loadStorage<Job>('jobs');
   const job = jobs.find(j => j.name === name);
 
@@ -144,9 +147,12 @@ export function removeJob(name: string): void {
     throw new Error(`Job "${name}" not found`);
   }
 
-  // Only remove from registry - don't delete the file (user manages files)
+  // Remove from registry
   const filtered = jobs.filter(j => j.name !== name);
   saveStorage('jobs', filtered);
+
+  // Return file path so caller can optionally delete it
+  return job.filePath || null;
 }
 
 /**

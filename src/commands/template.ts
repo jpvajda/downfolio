@@ -223,6 +223,30 @@ async function handleRemove(options: TemplateOptions): Promise<void> {
     process.exit(0);
   }
 
-  removeTemplate(templateToRemove.name, templateToRemove.type);
-  p.log.success(`Template "${templateToRemove.name}" removed successfully`);
+  const filePath = removeTemplate(templateToRemove.name, templateToRemove.type);
+  p.log.success(`Template "${templateToRemove.name}" removed from registry`);
+
+  // Prompt to delete the file if it exists
+  if (filePath && fs.existsSync(filePath)) {
+    const deleteFile = await p.confirm({
+      message: `Also delete the file "${path.basename(filePath)}"?`,
+      initialValue: false,
+    });
+
+    if (p.isCancel(deleteFile)) {
+      p.cancel('Operation cancelled');
+      process.exit(0);
+    }
+
+    if (deleteFile) {
+      try {
+        fs.unlinkSync(filePath);
+        p.log.success(`File "${path.basename(filePath)}" deleted`);
+      } catch (error) {
+        p.log.warn(`Failed to delete file: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    } else {
+      p.log.info(`File "${path.basename(filePath)}" kept in directory`);
+    }
+  }
 }

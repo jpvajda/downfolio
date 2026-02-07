@@ -71,10 +71,13 @@ async function customizeWithOpenAI(
       max_tokens: 2000,
     });
 
-    const content = completion.choices[0]?.message?.content;
+    let content = completion.choices[0]?.message?.content;
     if (!content) {
       throw new Error('No content returned from OpenAI API');
     }
+
+    // Strip code block markers if AI wrapped the response in ```
+    content = stripCodeBlockMarkers(content);
 
     return {
       content,
@@ -152,11 +155,14 @@ async function customizeWithAnthropic(
     }
 
     const data = await response.json() as { content?: Array<{ text?: string }> };
-    const content = data.content?.[0]?.text;
+    let content = data.content?.[0]?.text;
 
     if (!content) {
       throw new Error('No content returned from Anthropic API');
     }
+
+    // Strip code block markers if AI wrapped the response in ```
+    content = stripCodeBlockMarkers(content);
 
     return {
       content,
@@ -169,6 +175,19 @@ async function customizeWithAnthropic(
     }
     throw error;
   }
+}
+
+/**
+ * Strip code block markers (```) from AI response if present
+ * Note: OpenAI models tend to wrap markdown responses in code blocks more often than Anthropic,
+ * but we strip them from both providers as a defensive measure.
+ */
+function stripCodeBlockMarkers(content: string): string {
+  // Remove leading ```markdown or ``` if present
+  content = content.replace(/^```(?:markdown)?\s*\n?/i, '');
+  // Remove trailing ``` if present
+  content = content.replace(/\n?```\s*$/i, '');
+  return content.trim();
 }
 
 /**
@@ -186,7 +205,9 @@ Guidelines:
 - Maintain truthful representation of the candidate's background
 - Use action verbs and quantifiable achievements where possible
 - Keep the same structure and sections as the template
-- Return ONLY the customized markdown content, no explanations or meta-commentary`;
+- Return ONLY the customized markdown content, no explanations or meta-commentary
+- Do NOT wrap the response in code blocks (no triple backticks)
+- Return raw markdown text only`;
   } else {
     return `You are an expert cover letter writer specializing in personalized, compelling cover letters that connect candidate experiences to specific job opportunities.
 
@@ -197,7 +218,9 @@ Guidelines:
 - Use a professional but personable tone
 - Highlight 2-3 key experiences or skills that directly relate to the job
 - Keep the same structure and style as the template
-- Return ONLY the customized markdown content, no explanations or meta-commentary`;
+- Return ONLY the customized markdown content, no explanations or meta-commentary
+- Do NOT wrap the response in code blocks (no triple backticks)
+- Return raw markdown text only`;
   }
 }
 
