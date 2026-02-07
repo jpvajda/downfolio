@@ -9,9 +9,11 @@ AI-powered CLI tool for generating customized resumes and cover letters from mar
 
 ## Recommended Use
 
-1. Create base templates for cover letter and resumes that you write yourself based on your career experience. (Don't Use AI)
-2. For every job you want to apply for use Downfolio to generate custom resumes and cover letters from your base templates.
+1. Create base templates for cover letter and resumes based on your REAL career experience. (Don't Use AI for this step!)
+2. For every job you want to apply for use Downfolio to generate custom resumes and cover letters from your base templates using a job description.
 3. Review the output carefully and ensure it reflects your work experience.
+4. Edit as needed.
+5. Apply to the job.
 
 ## Installation
 

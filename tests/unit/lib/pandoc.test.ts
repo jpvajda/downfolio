@@ -73,9 +73,10 @@ describe('lib/pandoc.ts', () => {
         '-o',
         outputPath,
         '--from',
-        'markdown',
+        'markdown+smart',
         '--to',
         'docx',
+        '--standalone',
       ]);
     });
 
@@ -112,9 +113,10 @@ describe('lib/pandoc.ts', () => {
           '-o',
           outputPath,
           '--from',
-          'markdown',
+          'markdown+smart',
           '--to',
           'docx',
+          '--standalone',
         ])
       );
     });
@@ -134,16 +136,23 @@ describe('lib/pandoc.ts', () => {
       await convertToPdf(markdownPath, outputPath);
 
       expect(fs.existsSync).toHaveBeenCalledWith(markdownPath);
-      expect(execa).toHaveBeenCalledWith('pandoc', [
-        markdownPath,
-        '-o',
-        outputPath,
-        '--from',
-        'markdown',
-        '--to',
-        'pdf',
-        '--pdf-engine=pdflatex',
-      ]);
+      expect(execa).toHaveBeenCalledWith(
+        'pandoc',
+        [
+          markdownPath,
+          '-o',
+          outputPath,
+          '--from',
+          'markdown+smart',
+          '--to',
+          'pdf',
+          '--pdf-engine=pdflatex',
+          '--standalone',
+        ],
+        expect.objectContaining({
+          env: expect.any(Object),
+        })
+      );
     });
 
     it('should throw if markdown file does not exist', async () => {
@@ -166,26 +175,42 @@ describe('lib/pandoc.ts', () => {
       await convertToPdf(markdownPath, outputPath);
 
       expect(execa).toHaveBeenCalledTimes(2);
-      expect(execa).toHaveBeenNthCalledWith(1, 'pandoc', [
-        markdownPath,
-        '-o',
-        outputPath,
-        '--from',
-        'markdown',
-        '--to',
-        'pdf',
-        '--pdf-engine=pdflatex',
-      ]);
-      expect(execa).toHaveBeenNthCalledWith(2, 'pandoc', [
-        markdownPath,
-        '-o',
-        outputPath,
-        '--from',
-        'markdown',
-        '--to',
-        'pdf',
-        '--pdf-engine=xelatex',
-      ]);
+      expect(execa).toHaveBeenNthCalledWith(
+        1,
+        'pandoc',
+        [
+          markdownPath,
+          '-o',
+          outputPath,
+          '--from',
+          'markdown+smart',
+          '--to',
+          'pdf',
+          '--pdf-engine=pdflatex',
+          '--standalone',
+        ],
+        expect.objectContaining({
+          env: expect.any(Object),
+        })
+      );
+      expect(execa).toHaveBeenNthCalledWith(
+        2,
+        'pandoc',
+        [
+          markdownPath,
+          '-o',
+          outputPath,
+          '--from',
+          'markdown+smart',
+          '--to',
+          'pdf',
+          '--pdf-engine=xelatex',
+          '--standalone',
+        ],
+        expect.objectContaining({
+          env: expect.any(Object),
+        })
+      );
     });
 
     it('should throw helpful error if both PDF engines fail', async () => {
@@ -197,12 +222,12 @@ describe('lib/pandoc.ts', () => {
       await expect(convertToPdf(markdownPath, outputPath)).rejects.toThrow(
         'PDF conversion failed'
       );
-      
+
       // Reset and test again for second assertion
       vi.mocked(execa)
         .mockRejectedValueOnce(new Error('pdflatex not found'))
         .mockRejectedValueOnce(new Error('xelatex not found'));
-      
+
       await expect(convertToPdf(markdownPath, outputPath)).rejects.toThrow(
         'install a PDF engine'
       );
@@ -269,10 +294,15 @@ describe('lib/pandoc.ts', () => {
         ['pdf']
       );
 
-      expect(execa).toHaveBeenCalledWith(
-        'pandoc',
-        expect.arrayContaining(['--to', 'pdf'])
+      // Check that execa was called with pandoc and PDF-related arguments
+      const calls = vi.mocked(execa).mock.calls;
+      const pdfCall = calls.find(call =>
+        call[0] === 'pandoc' &&
+        Array.isArray(call[1]) &&
+        call[1].includes('--to') &&
+        call[1].includes('pdf')
       );
+      expect(pdfCall).toBeDefined();
       expect(result).toHaveLength(2); // markdown + pdf
       expect(result.some(f => f.endsWith('.pdf'))).toBe(true);
     });
