@@ -105,12 +105,12 @@ export async function convertToPdf(
       let errorMessage = 'PDF conversion failed. ';
 
       if (!texBinExists) {
+        errorMessage += 'Please install a PDF engine (pdflatex or xelatex). ';
+        errorMessage += 'Install BasicTeX: brew install --cask basictex';
+      } else {
         errorMessage += 'BasicTeX/MacTeX appears to be installed but not fully set up. ';
         errorMessage += 'Please ensure BasicTeX is fully installed and restart your terminal. ';
         errorMessage += 'If using Homebrew, you may need to run the installer package manually.';
-      } else {
-        errorMessage += 'Please install a PDF engine (pdflatex or xelatex). ';
-        errorMessage += 'Install BasicTeX: brew install --cask basictex';
       }
 
       errorMessage += ' Alternatively, install wkhtmltopdf: brew install wkhtmltopdf';
