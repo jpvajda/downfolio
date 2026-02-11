@@ -1,6 +1,24 @@
+# Source files (we ship compiled dist/)
 src/
 tsconfig.json
-*.md
+vitest.config.ts
+
+# Test files
+tests/
+
+# Development files
 .gitignore
 .npmignore
 .DS_Store
+.env
+.env.example
+
+# GitHub files (keep these for npm package visibility)
+# .github/ is included by default
+
+# Keep important documentation
+# README.md - included by default
+# CONTRIBUTING.md - included
+# TROUBLESHOOTING.md - included  
+# CHANGELOG.md - included
+# examples/ - included

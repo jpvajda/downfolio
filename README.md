@@ -99,19 +99,36 @@ pnpm link  # Makes 'downfolio' command available globally when testing
    └── Output/          # Generated customized documents
    ```
 
+2. **Copy example templates (optional but recommended):**
+   ```bash
+   cp examples/resume_template.md ~/Downfolio/Templates/
+   cp examples/cover_letter_template.md ~/Downfolio/Templates/
+   ```
+   
+   Then customize them with YOUR real experience. See [examples/README.md](./examples/README.md) for detailed guidance.
+
 ### Creating Templates
 
 Templates are versions of your cover letters or resumes. Use different templates based on your job search needs.
 
 ```text
-Examples: Engineering_Resume.md, Product_Manager_Cover_Letter,md, VP_of_Marketing_Resume.md, etc
+Examples: Engineering_Resume.md, Product_Manager_Cover_Letter.md, VP_of_Marketing_Resume.md, etc
 ```
 
-1. **Create template files:**
+1. **Start with example templates (recommended):**
+   ```bash
+   # Copy and customize the examples
+   cp examples/resume_template.md ~/Downfolio/Templates/my_resume.md
+   cp examples/cover_letter_template.md ~/Downfolio/Templates/my_cover_letter.md
+   ```
+   
+   Then edit these files to include YOUR actual experience. See [examples/README.md](./examples/README.md) for tips.
+
+2. **Or create template files from scratch:**
    - Create your resume or cover letter templates as markdown files directly in `~/Downfolio/Templates/`
    - Example: `~/Downfolio/Templates/my_resume_template.md`
 
-2. **Register a template:**
+3. **Register a template:**
    ```bash
    downfolio template add
    ```
