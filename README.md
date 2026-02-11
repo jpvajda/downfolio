@@ -1,11 +1,37 @@
 # Downfolio
 
-Markdown + Porfolio = Downfolio
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+
+Markdown + Portfolio = Downfolio
 
 AI-powered CLI tool for generating customized resumes and cover letters from markdown templates based on your career experience.
 
-
 ![image](./images/downfolio.png)
+
+## ✨ Features
+
+- 📝 **Markdown-first** - Write your base templates in simple markdown
+- 🤖 **AI-powered** - Automatically customize content for each job application
+- 🎯 **ATS-friendly** - Optimized for Applicant Tracking Systems
+- 📦 **Multiple formats** - Export to Markdown, DOCX, and PDF
+- 🔄 **Reusable templates** - Create once, customize for every job
+- 🎨 **Beautiful CLI** - Interactive prompts guide you through every step
+- 🔐 **Privacy-first** - Your data stays local, only job descriptions sent to AI
+
+## 📋 Table of Contents
+
+- [Recommended Use](#recommended-use)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Using API Keys](#using-api-keys)
+- [Development](#development)
+- [Testing](#testing)
+- [FAQ](#faq)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Recommended Use
 
@@ -174,6 +200,101 @@ pnpm run watch
 
 ## Testing
 
-See [tests](./tests/)
+```bash
+# Run all tests
+pnpm test
 
+# Run tests in watch mode
+pnpm test:watch
+```
+
+See [tests/README.md](./tests/README.md) for detailed testing documentation.
+
+## 📚 FAQ
+
+### Do I need to pay for API usage?
+
+Yes, Downfolio uses OpenAI or Anthropic APIs which are paid services. However, the cost per generation is typically $0.01-0.05 per document. You'll need to add a payment method to your API provider account.
+
+### Is my data private?
+
+Yes! Your resume and cover letter templates are stored locally on your machine. Only the job description and relevant portions of your experience are sent to the AI provider for customization.
+
+### Can I use this without AI?
+
+Not currently. The core feature is AI-powered customization. However, you can manually edit the markdown templates without using the generate command.
+
+### Which AI provider should I use?
+
+Both OpenAI (GPT-4) and Anthropic (Claude) work well. Try both and see which produces better results for your use case. Downfolio will automatically use whichever API key is configured.
+
+### Can I customize the AI prompts?
+
+Not through the CLI currently, but you can fork the project and modify the prompts in `src/lib/ai.ts`.
+
+### Does this work offline?
+
+Partially. You can create and edit templates offline, but the `generate` command requires an internet connection to call the AI APIs.
+
+### What markdown features are supported?
+
+Standard markdown is fully supported:
+- Headings (`#`, `##`, `###`)
+- Lists (ordered and unordered)
+- Bold and italic
+- Links
+- Code blocks
+
+Frontmatter is optional and used for metadata.
+
+### Can I export to other formats?
+
+Currently: Markdown, DOCX, and PDF. Other formats (HTML, LaTeX) can be added using Pandoc. See [CONTRIBUTING.md](./CONTRIBUTING.md) if you'd like to add support.
+
+### How do I update Downfolio?
+
+```bash
+cd /path/to/downfolio
+git pull
+pnpm install
+pnpm run build
+```
+
+## 🔧 Troubleshooting
+
+Having issues? Check out the [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) guide for solutions to common problems:
+
+- Installation issues
+- API key problems
+- Document generation errors
+- Configuration issues
+- And more...
+
+## 🤝 Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+
+### Quick Start for Contributors
+
+```bash
+git clone https://github.com/jpvajda/downfolio.git
+cd downfolio
+pnpm install
+pnpm run build
+pnpm test
+```
+
+## 📄 License
+
+MIT © [John P Vajda](https://github.com/jpvajda)
+
+## 🙏 Acknowledgments
+
+- [Clack](https://github.com/natemoo-re/clack) - Beautiful CLI prompts
+- [Pandoc](https://pandoc.org/) - Universal document converter
+- [OpenAI](https://openai.com/) & [Anthropic](https://anthropic.com/) - AI providers
+
+---
+
+**Need help?** Open an issue on [GitHub](https://github.com/jpvajda/downfolio/issues)
 
